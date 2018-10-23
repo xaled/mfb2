@@ -1,13 +1,13 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from mfb2.utils.path import decode_path
-
+from mfb2.utils.addons import get_providers
 
 def cli_debug_main():
     query = '/'
     while query != 'quit':
         result = process_query(query)
         for r in result:
-            print(r.__dict__)
+            print(r)
         query = input('$ ')
 
 
@@ -29,13 +29,11 @@ def process_query(query):
 
 
 def load_provider(provider_name):
-    if provider_name == 'gogoanime':
-        from providers.gogoanime import GogonanimeProvider
-        return GogonanimeProvider()
+    return get_providers(path='providers')[provider_name]()
 
 
 def index():
-    return []
+    return get_providers(path='providers').keys()
 
 
 if __name__ == '__main__':

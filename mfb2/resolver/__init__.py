@@ -1,0 +1,2 @@
+class AbstractResolver:
+    pass

@@ -25,3 +25,6 @@ class ListElement:
         self.icon_image = icon_image
         self.is_video = is_video
         self.source_url = source_url
+
+    def __str__(self):
+        return 'ListElement(%s)' % self.__dict__
