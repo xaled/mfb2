@@ -1,30 +1,61 @@
 import time
+import json
+import os
 
-
-CACHE_TIMEOUT = 3600
+DEFAULT_CACHE_TIMEOUT = 3600
+CLEANUP_INTERVAL = 600
+OUTPUT_JSON = "mdb2-cache.json"
 
 
 class Cache:
     def __init__(self):
-        self.db = dict()
-        self.last_cleanup = 0
+        self.next_cleanup = int(time.time()) + CLEANUP_INTERVAL
+        self.db = {}
+        if os.path.exists(OUTPUT_JSON):
+            with open(OUTPUT_JSON) as fin:
+                self.db = json.load(fin)
+        else:
+            with open(OUTPUT_JSON, 'w') as fou:
+                json.dump({}, fou)
 
     def __getitem__(self, key):
-        if key in self.db and int(time.time()) - self.db[key]['timestamp'] > CACHE_TIMEOUT:
+        self._cleanup()
+        if key in self.db and int(time.time()) > self.db[key]['expire']:
             del self.db[key]
         return self.db[key]['value']
 
-    def __putitem__(self, key, value):
-        self.db[key] = {'value': value, 'timestamp': int(time.time())}
+    def __setitem__(self, key, value):
+        self.put(key, value)
+
+    def put(self, key, value, timeout=None):
+        self._cleanup()
+        self.db[key] = {'value': value, 'requests': 0, 'expire': int(time.time()) + (timeout or DEFAULT_CACHE_TIMEOUT)}
 
     def __contains__(self, key):
+        self._cleanup()
         if key in self.db:
-            if int(time.time()) - self.db[key]['timestamp'] > CACHE_TIMEOUT:
+            if int(time.time()) > self.db[key]['expire'] :
                 del self.db[key]
                 return False
             return True
         return False
 
     def __delitem__(self, key):
+        self._cleanup()
         if key in self.db:
             del self.db[key]
+
+    def _cleanup(self):
+        if time.time() > self.next_cleanup:
+            to_remove = list()
+            t = int(time.time())
+            for key in self.db:
+                if t > self.db[key].expire:
+                    to_remove.append(key)
+            for key in to_remove:
+                del self.db[key]
+
+            with open(OUTPUT_JSON, 'w') as fou:
+                json.dump(self.db, OUTPUT_JSON)
+            self.next_cleanup = int(time.time()) + CLEANUP_INTERVAL
+
