@@ -5,6 +5,14 @@ import os
 DEFAULT_CACHE_TIMEOUT = 3600
 CLEANUP_INTERVAL = 600
 OUTPUT_JSON = "mdb2-cache.json"
+_cache_instance = None
+
+
+def get_cache_instance():
+    global _cache_instance
+    if _cache_instance is None:
+        _cache_instance = Cache()
+    return _cache_instance
 
 
 class Cache:

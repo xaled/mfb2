@@ -1,22 +1,35 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from mfb2.utils.path import decode_path
 from mfb2.utils.addons import get_providers
+import logging
+import sys
+logger = logging.getLogger(__name__)
 
-def cli_debug_main():
+
+def cli_debug_shell():
     query = '/'
     while query != 'quit':
-        result = process_query(query)
+        try:
+            path, params = query.split()
+        except:
+            path, params = query, ""
+
+        result = process_query(path, params)
         for r in result:
             print(r)
         query = input('$ ')
 
 
-def process_query(query):
-    try:
-        path, params = query.split()
-    except:
-        path, params = query, ""
+def cli_debug_main():
+    logging.basicConfig()
+    path = '/' if len(sys.argv) < 2 else sys.argv[1]
+    params = '' if len(sys.argv) < 3 else sys.argv[2]
+    result = process_query(path, params)
+    for r in result:
+        print(r)
 
+
+def process_query(path, params):
     path_elements, arguments = decode_path(path, params)
 
     if len(path_elements) == 0:
